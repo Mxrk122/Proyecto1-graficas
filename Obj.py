@@ -12,6 +12,7 @@ class Obj(object):
         self.vertex = []
         self.texture_vertex = []
         self.faces = []
+        self.normal_vertex = []
         self.modelMatrix = None
 
         for line in self.lines:
@@ -71,6 +72,16 @@ class Obj(object):
                     faces.append(face_splitted)
                     
                 self.faces.append(faces)"""
+
+            if tp == 'vn':
+
+                self.normal_vertex.append(
+                    list(
+                        map(
+                            float, value.strip().split(' ')
+                        )
+                    )
+                )
 
     # Funcion para manipular la model matrix
     def loadModelMatrix(self, scale=(1, 1, 1), translate=(0, 0, 0), rotate=(0, 0, 0)):

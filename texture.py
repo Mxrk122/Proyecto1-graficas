@@ -29,6 +29,7 @@ class Texture(object):
                     self.pixels[y].append(
                         color.color_RGB_to_GBR(r/255, g/255, b/255)
                     )
+            print("textura leida!")
     
     def get_color(self, tx, ty):
         x = round(tx * self.width)
@@ -43,12 +44,14 @@ class Texture(object):
         
 
         if(x >= self.width or y >= self.height):
-            return color.color_RGB_to_GBR(1, 1, 0)
+            return color.color_RGB_to_GBR(0.3, 0.1, 0.5)
         
         else:
             b = self.pixels[y][x][0] * intensity
             g = self.pixels[y][x][1] * intensity
             r = self.pixels[y][x][2] * intensity
+
+            
 
             return color.color_RGB_to_GBR(r/255, g/255, b/255)
 

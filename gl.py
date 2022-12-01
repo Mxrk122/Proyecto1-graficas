@@ -70,6 +70,9 @@ class gl(object):
 
         return self.object
     
+    def setShader(self, shader):
+        self.r.shader = shader
+    
     def glObjectMode(self, object: Obj, camera: Camera, scale, translate, rotate, current_color, texture=None):
 
         self.r.giveTexture(texture)
@@ -81,6 +84,7 @@ class gl(object):
         o.loadModelMatrix(scale, translate, rotate)
 
         for face in o.faces:
+            self.r.counter_shader += 1
             if len(face) == 4:
                 # Extraer caras
                 f1 = face[0][0] - 1
@@ -119,16 +123,65 @@ class gl(object):
                         *o.texture_vertex[f4]
                     )
 
-                    self.r.triangle((v1, v2, v3), current_color, (vt1, vt2, vt3))
+                    # Shaders
+                    if len(o.normal_vertex) > 0:
+                        fn1 = face[0][2] - 1
+                        fn2 = face[1][2] - 1
+                        fn3 = face[2][2] - 1
+                        fn4 = face[3][2] - 1
 
-                    self.r.triangle((v1, v4, v3), current_color, (vt1, vt4, vt3))
+                        vn1 = V3(
+                            *o.normal_vertex[fn1]
+                        )
+                        vn2 = V3(
+                            *o.normal_vertex[fn2]
+                        )
+                        vn3 = V3(
+                            *o.normal_vertex[fn3]
+                        )
+                        vn4 = V3(
+                            *o.normal_vertex[fn3]
+                        )
 
+                        self.r.triangle((v1, v2, v3), current_color, (vt1, vt2, vt3), (vn1, vn2, vn3))
+
+                        self.r.triangle((v1, v4, v3), current_color, (vt1, vt4, vt3), (vn1, vn4, vn3))
+                    
+                    else:
+                        self.r.triangle((v1, v2, v3), current_color, (vt1, vt2, vt3))
+
+                        self.r.triangle((v1, v4, v3), current_color, (vt1, vt4, vt3))
                 else:
 
-                    
-                    self.r.triangle((v1, v2, v3), current_color)
+                    #Si no hay textura, solo pintar con colores
+                    # Shaders
+                    if len(o.normal_vertex) > 0:
+                        fn1 = face[0][2] - 1
+                        fn2 = face[1][2] - 1
+                        fn3 = face[2][2] - 1
+                        fn4 = face[2][2] - 1
 
-                    self.r.triangle((v1, v4, v3), current_color)
+                        vn1 = V3(
+                            *o.normal_vertex[fn1]
+                        )
+                        vn2 = V3(
+                            *o.normal_vertex[fn2]
+                        )
+                        vn3 = V3(
+                            *o.normal_vertex[fn3]
+                        )
+                        vn4 = V3(
+                            *o.normal_vertex[fn4]
+                        )
+
+                        self.r.triangle((v1, v2, v3), current_color, None, (vn1, vn2, vn3))
+
+                        self.r.triangle((v1, v4, v3), current_color, None, (vn1, vn4, vn3))
+                    
+                    else:
+                        self.r.triangle((v1, v2, v3), current_color)
+
+                        self.r.triangle((v1, v4, v3), current_color)
                 
                 #print(f1, f2, f3, f4)
 
@@ -163,15 +216,57 @@ class gl(object):
                         *o.texture_vertex[f3]
                     )
 
-                    self.r.triangle((v1, v2, v3), current_color, (vt1, vt2, vt3))
+                    # Shaders
+                    if len(o.normal_vertex) > 0:
+                        fn1 = face[0][2] - 1
+                        fn2 = face[1][2] - 1
+                        fn3 = face[2][2] - 1
+
+                        vn1 = V3(
+                            *o.normal_vertex[fn1]
+                        )
+                        vn2 = V3(
+                            *o.normal_vertex[fn2]
+                        )
+                        vn3 = V3(
+                            *o.normal_vertex[fn3]
+                        )
+
+                        self.r.triangle((v1, v2, v3), current_color, (vt1, vt2, vt3), (vn1, vn2, vn3))
+                    
+                    else:
+                        self.r.triangle((v1, v2, v3), current_color, (vt1, vt2, vt3))  
 
                 else:
 
                     # si no hay textura, simplemente pintar el triangulo con colores
-                    self.r.triangle((v1, v2, v3), current_color)
+                    # Shaders
+                    if len(o.normal_vertex) > 0:
+
+                        fn1 = face[0][2] - 1
+                        fn2 = face[1][2] - 1
+                        fn3 = face[2][2] - 1
+
+                        vn1 = V3(
+                            *o.normal_vertex[fn1]
+                        )
+                        vn2 = V3(
+                            *o.normal_vertex[fn2]
+                        )
+                        vn3 = V3(
+                            *o.normal_vertex[fn3]
+                        )
+
+                        self.r.triangle((v1, v2, v3), current_color, None, (vn1, vn2, vn3))
+                    else:
+                        self.r.triangle((v1, v2, v3), current_color)
+        # Reiniciar contador
+        self.r.counter_shader = 0
+        self.r.shader = None
         return o
     
     def glTriangle(self, A, B, C):
+        print("Debuggeo en el triángulo")
         self.r.triangle(A, B, C)
 
     def glGiveTexture(self, texture):

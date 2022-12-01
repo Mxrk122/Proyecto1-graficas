@@ -13,7 +13,9 @@ class Render(object):
     fill_color = color.color_RGB_to_GBR(1, 1, 1)
     height = 1024
     width = 1024
+    shader = None
     texture = None
+    counter_shader = 0
     
 
     def __init__(self):
@@ -140,29 +142,19 @@ class Render(object):
         
         self.texture = texture
     
-    def triangle(self, vertex, object_color, tvertex=()):
+    def triangle(self, vertex, object_color, tvertex=(), nvertex=None):
 
         A, B, C = vertex
 
+        nA, nB, nC = 0, 0, 0
+
+        tA, tB, tC = 0, 0, 0
+
         if self.texture:
             tA, tB, tC = tvertex
-
-        L = V3(0, 0, 1)
-        N = cross_p((C - A), (B - A))
-        i = L.normalize() @ N.normalize()
-
-        if i < 0:
-            i = abs(i)
-
-        elif i > 1:
-            i = 1
         
-        #self.vertex_color = color.color_RGB_to_GBR(255 * i, 255 * i, 255 * i)
-        self.vertex_color = color.color_RGB_to_GBR(
-            object_color[0] * i,
-            object_color[1] * i,
-            object_color[2] * i
-        )
+        if nvertex:
+            nA, nB, nC = nvertex
 
         Bmin, Bmax = bounding_box(A, B, C)
 
@@ -181,16 +173,79 @@ class Render(object):
                     
 
                     if(self.simply_z(x, y, z)):
-                        
-                        if self.texture:
+
+                        #Mandar variables al shader
+                        self.vertex_color = self.paint_shader(
+                            object_color = object_color,
+                            barycentrics = (w, u, v),
+                            vertices = (A, B, C),
+                            t_vertices = (tA, tB, tC),
+                            normals = (nA, nB, nC)
+                        )
                             
-                            tX = tA.x * w + tB.x * v + tC.x * u
-                            tY = tA.y * w + tB.y * v + tC.y * u
-                            
-                            self.vertex_color = self.texture.get_intensity(tX, tY, i)
-                        
                         self.simply_point(x, y)
 
+    
+    # Emmbellecer detalles
+    def paint_shader(render, **kwargs ):
+        object_color = kwargs["object_color"]
+        A, B, C = kwargs["vertices"]
+        w, u, v, = kwargs["barycentrics"]
+        tA, tB, tC = kwargs["t_vertices"]
+        nA, nB, nC = kwargs["normals"]
+
+        L = V3(0, 1, 1)
+
+        iA = L.normalize() @ nA.normalize()
+        iB = L.normalize() @ nB.normalize()
+        iC = L.normalize() @ nC.normalize()
+
+        i = iA * w + iB * v + iC * u
+
+        if i < 0:
+            i = abs(i)
+
+        elif i > 1:
+            i = 1
+        
+        #self.vertex_color = color.color_RGB_to_GBR(255 * i, 255 * i, 255 * i)
+
+        if render.texture:
+                                
+            tX = tA.x * w + tB.x * v + tC.x * u
+            tY = tA.y * w + tB.y * v + tC.y * u
+            
+            return render.texture.get_intensity(tX, tY, i)
+        
+        # Shader
+        
+        elif render.shader:
+            paint_color = color.color_RGB_to_GBR(
+                    render.shader[0][0] * i,
+                    render.shader[0][1] * i,
+                    render.shader[0][2] * i
+            )
+
+            if render.counter_shader < 111146:
+                paint_color = color.color_RGB_to_GBR(
+                    render.shader[0][0] * i,
+                    render.shader[0][1] * i,
+                    render.shader[0][2] * i
+                )
+            else:
+                paint_color = color.color_RGB_to_GBR(
+                    render.shader[1][0] * i,
+                    render.shader[1][1] * i,
+                    render.shader[1][2] * i
+                )
+
+            return paint_color
+        
+        return color.color_RGB_to_GBR(
+            object_color[0] * i,
+            object_color[1] * i,
+            object_color[2] * i
+        )
 
     # Metodo dedicado a escribir la informacion que especificamos
     # a lo largo de la creacion de la imagen
